@@ -227,11 +227,13 @@ function module.DetermineAttack(character, attackType)
 
 	if math.abs(priorActivityTable[1] - os.time()) >= 3 then
 
-		-- took longer than 3 seconds
-		
+		if priorActivityTable[2] < 3 then
+			sequence = priorActivityTable[2] + 1
+		else
+			sequence = 1
 	else
 		
-		-- took less
+		sequence = priorActivityTable[2]
 		
 	end
 	
@@ -245,9 +247,11 @@ function module.DetermineAttack(character, attackType)
 		
 	else
 		
-		sequence = sequence + 1
-		attack = 1
-		
+		if priorActivityTable[2] < 3 then
+			sequence = priorActivityTable[2] + 1
+		else
+			sequence = 1		
+			attack = 1
 	end
 
 	activityTable[character.Name] = {
