@@ -11,8 +11,8 @@ local remoteStorage = game:GetService("ReplicatedStorage"):WaitForChild("Encrypt
 local remote1 = remoteStorage:WaitForChild("LightAttack")
 local remote2 = remoteStorage:WaitForChild("HeavyAttack")
 
-local remote3 = remoteStorage:WaitForChild("LightAttack")
-local remote4 = remoteStorage:WaitForChild("HeavyAttack")
+local remote3 = remoteStorage:WaitForChild("EquipMelee")
+local remote4 = remoteStorage:WaitForChild("UnequipMelee")
 
 local remote5 = remoteStorage:WaitForChild("Parry")
 
@@ -101,7 +101,74 @@ function module.StartEquip(character)
 	statusDict[character.Name] = 3
 	
 	local hitBox = hitboxModule:CreateHitbox(weapon, character)
-	local connection = hitBox.OnHit:Connect(module.OnHit(weapon, character))
+
+	local function OnHit(hit)
+		
+		if not hit then return end
+		if not hit.Parent then return end
+		if not hit.Parent.Parent then return end
+		
+		if math.abs(activityTable[character.Name][1] - os.time()) >= 2 then return end
+		
+		local hitCharacter
+		
+		if hit:FindFirstAncestorOfClass("Model") then
+			hitCharacter = hit:FindFirstAncestorOfClass("Model"):FindFirstChildOfClass("Humanoid").Parent
+		end
+		
+		if not hitCharacter then return end
+		
+		local attackType = activityTable[4]
+		
+		if not hitCharacter:FindFirstChild("Dodging") then return end
+		if not hitCharacter:FindFirstChild("Parrying") then return end
+
+		if attackType == 0 then
+			
+			-- light attack
+			
+			if hitCharacter:FindFirstChild("Parrying").Value == true then
+				
+				-- get parried loser
+				
+				return
+				
+			elseif hitCharacter:FindFirstChild("Dodging").Value == true then
+				
+				-- dodged
+				
+				return
+					
+			else
+				
+				-- record hit
+				
+				return
+				
+			end
+			
+		elseif attackType == 1 then
+			
+			-- heavy attack
+						
+			if hitCharacter:FindFirstChild("Dodging").Value == true then
+				
+				-- dodged
+				
+				return
+					
+			else
+				
+				-- record hit
+				
+				return
+				
+			end
+
+		end
+	end
+	
+	local connection = hitBox.OnHit:Connect(OnHit)
 	hitBoxConnections[character.Name] = connection
 	
 	return "Weapon equipped."
@@ -152,7 +219,7 @@ function module.StartUnequip(character)
 	
 end
 
-function module.DetermineAttack(character)
+function module.DetermineAttack(character, attackType)
 	
 	local priorActivityTable = activityTable[character.Name]
 	local sequence
@@ -182,6 +249,7 @@ function module.DetermineAttack(character)
 		os.time(),
 		sequence,
 		attack,
+		attackType,
 
 	}
 	
@@ -195,20 +263,20 @@ function module.EngageHeavy(character)
 
 	statusDict[character.Name] = 5
 	
-	local attackTable = module.DetermineAttack(character)
-	local animationName = fetchAnimation(attackTable[2], attackTable[3], 1)
+	local attackTable = module.DetermineAttack(character, 1)
+	local animationName = fetchAnimation(attackTable[2], attackTable[3], attackTable[4])
 	
 	character.Primary.Primary.Trail.Color = script.HeavyTrail.Color
 	character.Primary.Primary.Trail.Enabled = true
 	
 	local animation = animationModule:PlayAnimation(character:WaitForChild("Humanoid"), "SwordClass", animationName)
-	activityTable[character.Name][4] = animation
+	activityTable[character.Name][5] = animation
 	
 	wait(animation.Length)
 	
 	character.Primary.Primary.Trail.Enabled = false
 	
-	activityTable[character.Name][4] = nil
+	activityTable[character.Name][5] = nil
 	
 	return
 		
@@ -217,13 +285,23 @@ end
 function module.EngageLight(character)
 
 	if not statusDict[character.Name] == 3 then return end
-	
-	statusDict[character.Name] = 6
-	
-	local attackTable = module.DetermineAttack(character)
-	local animationName = fetchAnimation(attackTable[2], attackTable[3], 1)
 
-	
+	statusDict[character.Name] = 6
+
+	local attackTable = module.DetermineAttack(character, 0)
+	local animationName = fetchAnimation(attackTable[2], attackTable[3], attackTable[4])
+
+	character.Primary.Primary.Trail.Color = script.HeavyTrail.Color
+	character.Primary.Primary.Trail.Enabled = true
+
+	local animation = animationModule:PlayAnimation(character:WaitForChild("Humanoid"), "SwordClass", animationName)
+	activityTable[character.Name][5] = animation
+
+	wait(animation.Length)
+
+	character.Primary.Primary.Trail.Enabled = false
+
+	activityTable[character.Name][5] = nil
 	
 end
 
@@ -235,10 +313,12 @@ function module.EngageParry(character)
 	
 end
 
-function module.OnHit(weapon, character)
-	
-	--
-	
-end
+remote1.OnServerInvoke = module.EngageLight
+remote2.OnServerInvoke = module.EngageHeavy
+
+remote3.OnServerInvoke = module.StartEquip
+remote4.OnServerInvoke = module.StartUnequip
+
+remote5.OnServerInvoke = module.EngageParry
 
 return module
