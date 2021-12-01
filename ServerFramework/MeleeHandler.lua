@@ -225,6 +225,8 @@ function module.DetermineAttack(character, attackType)
 	local sequence
 	local attack
 
+	
+	
 	if math.abs(priorActivityTable[1] - os.time()) >= 3 then
 
 		if priorActivityTable[2] < 3 then
