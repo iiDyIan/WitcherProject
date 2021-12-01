@@ -6,16 +6,10 @@ local projectileModule = require(script.Parent.Projectiles)
 
 local arrowSpeedModifier = 200
 
-local remote1
-local remote2
-local remote3
-local remote4
-
-remote1 = game:GetService("ReplicatedStorage"):WaitForChild("EncryptedFunctions"):WaitForChild("BowAim")
-remote2 = game:GetService("ReplicatedStorage"):WaitForChild("EncryptedFunctions"):WaitForChild("BowAimEnd")
-
-remote3 = game:GetService("ReplicatedStorage"):WaitForChild("EncryptedFunctions"):WaitForChild("BowDraw")
-remote4 = game:GetService("ReplicatedStorage"):WaitForChild("EncryptedFunctions"):WaitForChild("BowDrawEnd")
+local remote1 = game:GetService("ReplicatedStorage"):WaitForChild("EncryptedFunctions"):WaitForChild("BowAim")
+local remote2 = game:GetService("ReplicatedStorage"):WaitForChild("EncryptedFunctions"):WaitForChild("BowAimEnd")
+local remote3 = game:GetService("ReplicatedStorage"):WaitForChild("EncryptedFunctions"):WaitForChild("BowDraw")
+local remote4 = game:GetService("ReplicatedStorage"):WaitForChild("EncryptedFunctions"):WaitForChild("BowDrawEnd")
 
 local module = {}
 
@@ -89,17 +83,7 @@ function module.GrabArrow(character)
 end
 
 function module.PutAwayArrow(character)
-	
-	--[[
-	if debounce[character.Name] == true then
-				
-		repeat
-			wait(.1)
-		until
-		debounce[character.Name] == false		
 
-	end
-	]]
 	local bow
 
 	if character:FindFirstChild("Bow") then
@@ -383,8 +367,6 @@ function module.RealExternalReleaseBowDraw(character)
 	weldModule:LocateAndDestroyWelds(character:WaitForChild("RightHand"), "stringmid")
 	weldModule:Weld(bow.Bow.stringmid, bow.Bow.Handle, nil, stringC0s)
 	
-	--module.PutAwayArrow(character)
-
 	debounce3[character.Name] = false
 	debounce4[character.Name] = false
 	
