@@ -12,11 +12,8 @@ local hudui = player:WaitForChild("PlayerGui"):WaitForChild("HUDUI")
 
 local powerFrame = hudui:WaitForChild("Frame"):WaitForChild("Frame"):WaitForChild("ImageLabel"):WaitForChild("Frame2")
 
-local remote1
-local remote2
-
-remote1 = game:GetService("ReplicatedStorage"):WaitForChild("EncryptedFunctions"):WaitForChild("UpdatePower")
-remote2 = game:GetService("ReplicatedStorage"):WaitForaChild("EncryptedFunctions"):WaitForChild("DisplayDamageUI")
+local remote1 = game:GetService("ReplicatedStorage"):WaitForChild("EncryptedFunctions"):WaitForChild("UpdatePower")
+local remote2 = game:GetService("ReplicatedStorage"):WaitForaChild("EncryptedFunctions"):WaitForChild("DisplayDamageUI")
 
 local function tweenObject(length,object,properties)
 	
