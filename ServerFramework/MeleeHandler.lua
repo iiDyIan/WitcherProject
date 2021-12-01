@@ -4,6 +4,7 @@ local statusDict = {}
 local activityTable = {}
 
 local animationModule = require(script.Parent.Parent:WaitForChild('AnimationHandler'))
+local hitboxModule = require(script:WaitForChild("HitBoxHandler"))
 
 local remoteStorage = game:GetService("ReplicatedStorage"):WaitForChild("EncryptedFunctions")
 
@@ -14,6 +15,8 @@ local remote3 = remoteStorage:WaitForChild("LightAttack")
 local remote4 = remoteStorage:WaitForChild("HeavyAttack")
 
 local remote5 = remoteStorage:WaitForChild("Parry")
+
+local hitBoxConnections = {}
 
 local sequenceDict = {
 	
@@ -59,7 +62,7 @@ function module.init(sendModule, character, weapon)
 
 	m6d.Parent = character.UpperTorso
 	m6d.Name = "Primary"
-
+	
 	statusDict[character.Name] = 1
 
 end
@@ -96,7 +99,11 @@ function module.StartEquip(character)
 	animationModule:PlayAnimation(character.Humanoid, "SwordClass", "Idle")
 	
 	statusDict[character.Name] = 3
-
+	
+	local hitBox = hitboxModule:CreateHitbox(weapon, character)
+	local connection = hitBox.OnHit:Connect(module.OnHit(weapon, character))
+	hitBoxConnections[character.Name] = connection
+	
 	return "Weapon equipped."
 
 end
@@ -133,6 +140,13 @@ function module.StartUnequip(character)
 	animationModule:StopAnimation(character.Humanoid, "SwordClass", "Idle")
 	
 	statusDict[character.Name] = 1
+	
+	hitboxModule:DeleteHitbox(character)
+	
+	if hitBoxConnections[character.Name] then
+		hitBoxConnections[character.Name]:Disconnect()
+		hitBoxConnections[character.Name] = nil
+	end
 	
 	return "Weapon unequipped."
 	
@@ -218,6 +232,12 @@ function module.EngageParry(character)
 	if not statusDict[character.Name] == 3 then return end
 
 	statusDict[character.Name] = 8
+	
+end
+
+function module.OnHit(weapon, character)
+	
+	--
 	
 end
 
