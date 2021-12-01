@@ -6,14 +6,10 @@ UIS.MouseIconEnabled = false
 
 local Player = game.Players.LocalPlayer
 
-repeat wait() until Player.Character
-repeat wait() until Player.Character.Humanoid
-repeat wait() until Player.Character.HumanoidRootPart
-
-local Character = Player.Character
-local HumanoidRootPart = Character.HumanoidRootPart
-local UpperTorso = Character.UpperTorso
-local Humanoid = Character.Humanoid
+local Character = Player.Character or Player.CharacterAdded:Wait()
+local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+local UpperTorso = Character:WaitForChild("UpperTorso")
+local Humanoid = Character:WaitForChild("Humanoid")
 
 Humanoid.AutoRotate = false
 
@@ -54,6 +50,7 @@ local Combinations = {
 }
 
 local Cam = game.Workspace.CurrentCamera
+
 Cam.CameraType = Enum.CameraType.Scriptable
 UIS.MouseBehavior = Enum.MouseBehavior.LockCenter
 
