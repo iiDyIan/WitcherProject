@@ -1,6 +1,6 @@
 # Witcher Project
 
-II Studios
+II / Goatem Studios
 
 Project Overview:
 
