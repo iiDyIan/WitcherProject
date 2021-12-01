@@ -225,23 +225,29 @@ function module.DetermineAttack(character, attackType)
 	local sequence
 	local attack
 
-	if math.abs(priorActivityTable[1] - os.time()) >= 5 then
+	if math.abs(priorActivityTable[1] - os.time()) >= 3 then
 
-		if priorActivityTable[2] < 3 then
-			sequence = priorActivityTable[2] + 1
-		else
-			sequence = 1
-		end
-
-	elseif activityTable[character.Name] < 6 then
-
-		attack = priorActivityTable[3] + 1
-
+		-- took longer than 3 seconds
+		
 	else
-
+		
+		-- took less
+		
+	end
+	
+	if sequence ~= priorActivityTable[2] then
+		
+		attack = 1
+	
+	elseif priorActivityTable[3] <= 5 then
+		
+		attack = priorActivityTable[3] + 1
+		
+	else
+		
 		sequence = sequence + 1
 		attack = 1
-
+		
 	end
 
 	activityTable[character.Name] = {
