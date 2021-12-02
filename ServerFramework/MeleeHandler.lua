@@ -5,6 +5,7 @@ local activityTable = {}
 
 local animationModule = require(script.Parent.Parent:WaitForChild('AnimationHandler'))
 local hitboxModule = require(script:WaitForChild("HitBoxHandler"))
+local damageModule = require(script.Parent:WaitForChild("DamageHandler"))
 
 local remoteStorage = game:GetService("ReplicatedStorage"):WaitForChild("EncryptedFunctions")
 
@@ -16,6 +17,7 @@ local remote4 = remoteStorage:WaitForChild("UnequipMelee")
 
 local remote5 = remoteStorage:WaitForChild("Parry")
 
+local damageDebounce = {}
 local hitBoxConnections = {}
 local queueList = {}
 
@@ -24,6 +26,13 @@ local sequenceDict = {
 	"A",
 	"B",
 	"C",
+	
+}
+
+local attackTypeTranslate = {
+	
+	[0] = "LightSwordStrike",
+	[1] = "HeavySwordStrike",
 	
 }
 
@@ -114,13 +123,13 @@ function module.StartEquip(sendModule, character)
 	local hitBox = hitboxModule:CreateHitbox(weapon, character)
 
 	local function OnHit(hit)
-		
+				
 		if not hit then return end
 		if not hit.Parent then return end
 		if not hit.Parent.Parent then return end
-		
-		if math.abs(activityTable[character.Name][1] - os.time()) >= 2 then return end
-		
+				
+		if (os.time() - activityTable[character.Name][1]) >= 2 then return end
+				
 		local hitCharacter
 		
 		if hit:FindFirstAncestorOfClass("Model") then
@@ -128,50 +137,50 @@ function module.StartEquip(sendModule, character)
 		end
 		
 		if not hitCharacter then return end
-		
-		local attackType = activityTable[4]
-		
+				
+		local attackType = activityTable[character.Name][4]
+				
 		if not hitCharacter:FindFirstChild("Dodging") then return end
 		if not hitCharacter:FindFirstChild("Parrying") then return end
-
+		
+		if damageDebounce[character.Name] == true then return end
+				
 		if attackType == 0 then
-			
-			-- light attack
 			
 			if hitCharacter:FindFirstChild("Parrying").Value == true then
 				
-				-- get parried loser
+				print("Hit, but effectively parried.")
 				
 				return
 				
 			elseif hitCharacter:FindFirstChild("Dodging").Value == true then
 				
-				-- dodged
+				print("Hit, but player was dodging! (a)")
 				
 				return
 					
 			else
 				
-				-- record hit
+				damageModule:DamageHumanoid(character.Name, hitCharacter:FindFirstChild("Humanoid"), hit, attackTypeTranslate[attackType])
+				damageDebounce[character.Name] = true
 				
 				return
 				
 			end
 			
 		elseif attackType == 1 then
-			
-			-- heavy attack
-						
+									
 			if hitCharacter:FindFirstChild("Dodging").Value == true then
 				
-				-- dodged
+				print("Hit, but player was dodging! (b)")
 				
 				return
 					
 			else
 				
-				-- record hit
-				
+				damageModule:DamageHumanoid(character.Name, hitCharacter:FindFirstChild("Humanoid"), hit, attackTypeTranslate[attackType])
+				damageDebounce[character.Name] = true
+
 				return
 				
 			end
@@ -180,7 +189,7 @@ function module.StartEquip(sendModule, character)
 	end
 	
 	local connection = hitBox.OnHit:Connect(OnHit)
-	hitBoxConnections[character.Name] = connection
+	hitBoxConnections[character.Name] = {connection, hitBox}
 	
 	return "Weapon equipped."
 
@@ -222,8 +231,10 @@ function module.StartUnequip(sendModule, character)
 	hitboxModule:DeleteHitbox(character)
 	
 	if hitBoxConnections[character.Name] then
-		hitBoxConnections[character.Name]:Disconnect()
-		hitBoxConnections[character.Name] = nil
+		if hitBoxConnections[character.Name][1] then
+			hitBoxConnections[character.Name]:Disconnect()
+			hitBoxConnections[character.Name] = nil
+		end
 	end
 	
 	return "Weapon unequipped."
@@ -236,7 +247,7 @@ function module.DetermineAttack(character, attackType)
 	local sequence
 	local attack
 	
-	if (os.time() - priorActivityTable[1]) >= .5 then
+	if (os.time() - priorActivityTable[1]) >= .4 then
 
 		if priorActivityTable[2] < 3 then
 			sequence = priorActivityTable[2] + 1
@@ -315,7 +326,11 @@ function module.EngageHeavy(sendModule, character)
 	local animation = animationModule:PlayAnimation(character:WaitForChild("Humanoid"), "SwordClass", animationName)
 	
 	if animation.Length then
-	
+		
+		damageDebounce[character.Name] = false
+		
+		hitBoxConnections[character.Name][2]:HitStart()
+		
 		activityTable[character.Name][5] = animation
 		activityTable[character.Name][1] = activityTable[character.Name][1] + animation.Length
 		
@@ -327,6 +342,8 @@ function module.EngageHeavy(sendModule, character)
 	character.Primary.Primary.Trail.Enabled = false
 	
 	activityTable[character.Name][5] = nil
+	
+	hitBoxConnections[character.Name][2]:HitStop()
 	
 	return
 		
@@ -363,7 +380,11 @@ function module.EngageLight(sendModule, character)
 	local animation = animationModule:PlayAnimation(character:WaitForChild("Humanoid"), "SwordClass", animationName)
 	
 	if animation.Length then
-
+		
+		damageDebounce[character.Name] = false
+		
+		hitBoxConnections[character.Name][2]:HitStart()
+		
 		activityTable[character.Name][5] = animation
 		activityTable[character.Name][1] = activityTable[character.Name][1] + animation.Length
 
@@ -375,6 +396,8 @@ function module.EngageLight(sendModule, character)
 	character.Primary.Primary.Trail.Enabled = false
 
 	activityTable[character.Name][5] = nil
+	
+	hitBoxConnections[character.Name][2]:HitStop()
 	
 	return
 	
