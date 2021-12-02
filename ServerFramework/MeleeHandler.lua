@@ -17,12 +17,13 @@ local remote4 = remoteStorage:WaitForChild("UnequipMelee")
 local remote5 = remoteStorage:WaitForChild("Parry")
 
 local hitBoxConnections = {}
+local queueList = {}
 
 local sequenceDict = {
 	
-	[1] = "A",
-	[2] = "B",
-	[3] = "C",
+	"A",
+	"B",
+	"C",
 	
 }
 
@@ -40,7 +41,7 @@ local function fetchAnimation(sequence, attack, attackType)
 		
 	end
 	
-	animationName = animationName..attack..sequenceDict[sequence]
+	animationName = animationName..tostring(attack)..tostring(sequenceDict[sequence])
 	
 	return animationName
 	
@@ -63,13 +64,23 @@ function module.init(sendModule, character, weapon)
 	m6d.Parent = character.UpperTorso
 	m6d.Name = "Primary"
 	
+	activityTable[character.Name] = {
+		
+		os.time(),
+		1,
+		1,
+		1,
+		
+	}
+	
+	queueList[character.Name] = false
 	statusDict[character.Name] = 1
 
 end
 
-function module.StartEquip(character)
+function module.StartEquip(sendModule, character)
 
-	if statusDict[character.Name] ~= 1 then return end
+	if statusDict[character.Name] ~= 1 then return statusDict[character.Name] end
 
 	statusDict[character.Name] = 2
 
@@ -175,9 +186,9 @@ function module.StartEquip(character)
 
 end
 
-function module.StartUnequip(character)
+function module.StartUnequip(sendModule, character)
 
-	if statusDict[character.Name] ~= 3 then return end
+	if statusDict[character.Name] ~= 3 then return statusDict[character.Name] end
 
 	statusDict[character.Name] = 8
 	
@@ -224,37 +235,40 @@ function module.DetermineAttack(character, attackType)
 	local priorActivityTable = activityTable[character.Name]
 	local sequence
 	local attack
-
 	
-	
-	if math.abs(priorActivityTable[1] - os.time()) >= 3 then
+	if (os.time() - priorActivityTable[1]) >= .5 then
 
 		if priorActivityTable[2] < 3 then
 			sequence = priorActivityTable[2] + 1
 		else
 			sequence = 1
-	else
+		end
 		
+	else
+
 		sequence = priorActivityTable[2]
-		
+
 	end
-	
+
 	if sequence ~= priorActivityTable[2] then
-		
+
 		attack = 1
-	
+
 	elseif priorActivityTable[3] <= 5 then
-		
+
 		attack = priorActivityTable[3] + 1
-		
+
 	else
-		
+
 		if priorActivityTable[2] < 3 then
 			sequence = priorActivityTable[2] + 1
+			attack = 1
 		else
 			sequence = 1		
 			attack = 1
-	end
+		end
+	
+	end	
 
 	activityTable[character.Name] = {
 
@@ -266,13 +280,30 @@ function module.DetermineAttack(character, attackType)
 	}
 	
 	return activityTable[character.Name]
-	
+		
+		
 end
 
-function module.EngageHeavy(character)
+function module.EngageHeavy(sendModule, character)
 
-	if not statusDict[character.Name] == 3 then return end
+	if statusDict[character.Name] ~= 3 then 
+		if queueList[character.Name] == true then
 
+			return
+
+		else
+
+			queueList[character.Name] = true
+
+			repeat
+				wait(.05)
+			until
+			statusDict[character.Name] == 3
+
+		end
+	end
+
+	queueList[character.Name] = false
 	statusDict[character.Name] = 5
 	
 	local attackTable = module.DetermineAttack(character, 1)
@@ -282,10 +313,17 @@ function module.EngageHeavy(character)
 	character.Primary.Primary.Trail.Enabled = true
 	
 	local animation = animationModule:PlayAnimation(character:WaitForChild("Humanoid"), "SwordClass", animationName)
-	activityTable[character.Name][5] = animation
+	
+	if animation.Length then
+	
+		activityTable[character.Name][5] = animation
+		activityTable[character.Name][1] = activityTable[character.Name][1] + animation.Length
+		
+	end
 	
 	wait(animation.Length)
 	
+	statusDict[character.Name] = 3
 	character.Primary.Primary.Trail.Enabled = false
 	
 	activityTable[character.Name][5] = nil
@@ -294,32 +332,57 @@ function module.EngageHeavy(character)
 		
 end
 
-function module.EngageLight(character)
+function module.EngageLight(sendModule, character)
 
-	if not statusDict[character.Name] == 3 then return end
-
+	if statusDict[character.Name] ~= 3 then 
+		if queueList[character.Name] == true then
+			
+			return
+				
+		else
+			
+			queueList[character.Name] = true
+			
+			repeat
+				wait(.05)
+			until
+			statusDict[character.Name] == 3
+				
+		end
+	end
+	
+	queueList[character.Name] = false
 	statusDict[character.Name] = 6
 
 	local attackTable = module.DetermineAttack(character, 0)
 	local animationName = fetchAnimation(attackTable[2], attackTable[3], attackTable[4])
 
-	character.Primary.Primary.Trail.Color = script.HeavyTrail.Color
+	character.Primary.Primary.Trail.Color = script.DefaultTrail.Color
 	character.Primary.Primary.Trail.Enabled = true
-
+	
 	local animation = animationModule:PlayAnimation(character:WaitForChild("Humanoid"), "SwordClass", animationName)
-	activityTable[character.Name][5] = animation
+	
+	if animation.Length then
 
+		activityTable[character.Name][5] = animation
+		activityTable[character.Name][1] = activityTable[character.Name][1] + animation.Length
+
+	end
+	
 	wait(animation.Length)
-
+	
+	statusDict[character.Name] = 3
 	character.Primary.Primary.Trail.Enabled = false
 
 	activityTable[character.Name][5] = nil
 	
+	return
+	
 end
 
-function module.EngageParry(character)
+function module.EngageParry(sendModule, character)
 
-	if not statusDict[character.Name] == 3 then return end
+	if statusDict[character.Name] ~= 3 then return end
 
 	statusDict[character.Name] = 8
 	
