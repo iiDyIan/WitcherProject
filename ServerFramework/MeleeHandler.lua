@@ -143,8 +143,13 @@ function module.StartEquip(sendModule, character)
 		if not hitCharacter:FindFirstChild("Dodging") then return end
 		if not hitCharacter:FindFirstChild("Parrying") then return end
 		
-		if damageDebounce[character.Name] == true then return end
-				
+		print(1)
+		
+		--if not damageDebounce[character.Name] then return end
+		if damageDebounce[character.Name][hitCharacter.Name] == true then return end
+		
+		print(2)
+		
 		if attackType == 0 then
 			
 			if hitCharacter:FindFirstChild("Parrying").Value == true then
@@ -162,8 +167,8 @@ function module.StartEquip(sendModule, character)
 			else
 				
 				damageModule:DamageHumanoid(character.Name, hitCharacter:FindFirstChild("Humanoid"), hit, attackTypeTranslate[attackType])
-				damageDebounce[character.Name] = true
-				
+				damageDebounce[character.Name][hitCharacter.Name] = true
+
 				return
 				
 			end
@@ -179,7 +184,7 @@ function module.StartEquip(sendModule, character)
 			else
 				
 				damageModule:DamageHumanoid(character.Name, hitCharacter:FindFirstChild("Humanoid"), hit, attackTypeTranslate[attackType])
-				damageDebounce[character.Name] = true
+				damageDebounce[character.Name][hitCharacter.Name] = true
 
 				return
 				
@@ -327,8 +332,8 @@ function module.EngageHeavy(sendModule, character)
 	
 	if animation.Length then
 		
-		damageDebounce[character.Name] = false
-		
+		damageDebounce[character.Name] = {}
+
 		hitBoxConnections[character.Name][2]:HitStart()
 		
 		activityTable[character.Name][5] = animation
@@ -381,7 +386,7 @@ function module.EngageLight(sendModule, character)
 	
 	if animation.Length then
 		
-		damageDebounce[character.Name] = false
+		damageDebounce[character.Name] = {}
 		
 		hitBoxConnections[character.Name][2]:HitStart()
 		
