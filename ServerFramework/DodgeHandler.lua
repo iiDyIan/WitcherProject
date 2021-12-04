@@ -3,6 +3,9 @@ local module = {}
 local remote = game:GetService("ReplicatedStorage"):WaitForChild("EncryptedFunctions"):WaitForChild("Dodge")
 local remote2 = game:GetService("ReplicatedStorage"):WaitForChild("EncryptedFunctions"):WaitForChild("Roll")
 
+local remote3 = game:GetService("ReplicatedStorage"):WaitForChild("EncryptedFunctions"):WaitForChild("SprintEngage")
+local remote4 = game:GetService("ReplicatedStorage"):WaitForChild("EncryptedFunctions"):WaitForChild("SprintDisengage")
+
 local animationModule = require(game:GetService("ServerScriptService"):WaitForChild("ServerHandler"):WaitForChild("AnimationHandler"))
 
 local tweenService = game:GetService("TweenService")
@@ -11,6 +14,65 @@ local function tweenObject(length, object, properties)
 	
 	local tInfo = TweenInfo.new(length, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, 0, false, 0)
 	local tween = tweenService:Create(object, tInfo, properties):Play()
+	
+end
+
+local function getSprintSpeed(player)
+	
+	local character = player.Character
+	local playerTeam = player.TeamColor
+	
+	local workspaceObjects = workspace:GetChildren()
+	
+	local characterTable = {}
+	local sprintSpeed = 20
+	
+	for i = 1,#workspaceObjects do
+		if workspaceObjects[i].ClassName == "Model" then
+			if game:GetService("Players"):FindFirstChild(workspaceObjects[i].Name) then
+				if not game:GetService("Players"):FindFirstChild(workspaceObjects[i].Name).TeamColor == playerTeam then
+				
+					table.insert(characterTable, workspaceObjects[i].Name)
+					
+				end	
+			end
+		end
+	end
+	
+	for i = 1,#characterTable do
+		
+		if (characterTable[i].HumanoidRootPart.Position - character.HumanoidRootPart.Position).magnitude <= 25 then
+			if sprintSpeed > 17 then
+				sprintSpeed = sprintSpeed - 0.5
+			end
+		end
+	end
+	
+	return sprintSpeed
+	
+end
+
+local function engageSprint(player)
+	
+	if not player then return end
+	if not player.Character then return end
+	if not player.Character:FindFirstChild("Humanoid") then return end
+	
+	player.Character.Humanoid.WalkSpeed = getSprintSpeed(player) 
+	
+	return true
+	
+end
+
+local function disengageSprint(player)
+	
+	if not player then return  end
+	if not player.Character then return end
+	if not player.Character:FindFirstChild("Humanoid") then return end
+	
+	player.Character.Humanoid.WalkSpeed = 16
+	
+	return true
 	
 end
 
@@ -126,8 +188,8 @@ function module.ExecuteDodge(player, keyCode)
 
 		for i = 1, 10, 1 do
 			
-			tweenObject(.005, player.Character.HumanoidRootPart, {CFrame = player.Character.HumanoidRootPart.CFrame + (player.Character.Humanoid.MoveDirection)*.75})
-			wait(.0075)
+			tweenObject(.0025, player.Character.HumanoidRootPart, {CFrame = player.Character.HumanoidRootPart.CFrame + (player.Character.Humanoid.MoveDirection)*.75})
+			wait(.005)
 			
 			if i == 2 then
 				
@@ -157,7 +219,7 @@ function module.ExecuteDodge(player, keyCode)
 		
 		materialTable = {}
 				
-		wait(.35)
+		wait(.125)
 		
 		player.Character.Humanoid.WalkSpeed = 16
 		
@@ -171,8 +233,8 @@ function module.ExecuteDodge(player, keyCode)
 		
 		for i = 1, 10, 1 do
 
-			tweenObject(.0075, player.Character.HumanoidRootPart, {CFrame = player.Character.HumanoidRootPart.CFrame + -(player.Character.HumanoidRootPart.CFrame.LookVector)*.75})
-			wait(.0075)
+			tweenObject(.0025, player.Character.HumanoidRootPart, {CFrame = player.Character.HumanoidRootPart.CFrame + -(player.Character.HumanoidRootPart.CFrame.LookVector)*.75})
+			wait(.005)
 			
 			if i == 2 then
 				
@@ -202,7 +264,7 @@ function module.ExecuteDodge(player, keyCode)
 
 		materialTable = {}
 		
-		wait(.35)
+		wait(.125)
 
 		player.Character.Humanoid.WalkSpeed = 16
 		
@@ -227,5 +289,8 @@ end
 
 remote.OnServerInvoke = module.ExecuteDodge
 remote2.OnServerInvoke = module.ExecuteRoll
+
+remote3.OnServerEvent:Connect(engageSprint)
+remote4.OnServerEvent:Connect(disengageSprint)
 
 return module
