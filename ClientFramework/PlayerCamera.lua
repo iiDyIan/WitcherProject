@@ -6,10 +6,14 @@ UIS.MouseIconEnabled = false
 
 local Player = game.Players.LocalPlayer
 
-local Character = Player.Character or Player.CharacterAdded:Wait()
-local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
-local UpperTorso = Character:WaitForChild("UpperTorso")
-local Humanoid = Character:WaitForChild("Humanoid")
+repeat wait() until Player.Character
+repeat wait() until Player.Character.Humanoid
+repeat wait() until Player.Character.HumanoidRootPart
+
+local Character = Player.Character
+local HumanoidRootPart = Character.HumanoidRootPart
+local UpperTorso = Character.UpperTorso
+local Humanoid = Character.Humanoid
 
 Humanoid.AutoRotate = false
 
@@ -28,6 +32,9 @@ local AngleV = 0
 local SensitivityY = 300
 local SensitivityX = 300
 
+local MobileSensitivityY = 150
+local MobileSensitivityX = 150
+
 local W = false
 local A = false
 local S = false
@@ -35,6 +42,8 @@ local D = false
 
 local MaxY = 5*math.pi/12
 local MinY = -5*math.pi/12
+
+local mobileEnabled = not UIS.KeyboardEnabled
 
 local Combinations = {
 
@@ -50,7 +59,6 @@ local Combinations = {
 }
 
 local Cam = game.Workspace.CurrentCamera
-
 Cam.CameraType = Enum.CameraType.Scriptable
 UIS.MouseBehavior = Enum.MouseBehavior.LockCenter
 
@@ -73,6 +81,11 @@ local function tweenObject2(object,length,CFrame2)
 end
 
 local module = {}
+
+if mobileEnabled == true then
+	SensitivityX = MobileSensitivityX
+	SensitivityY = MobileSensitivityY
+end
 
 function module.RenderStepped()
 	
@@ -186,15 +199,47 @@ function module.SetCameraEnabled(sendModule,boolEnabled)
 	end
 end
 
-local renderConnection = RunService.RenderStepped:Connect(module.RenderStepped)
+function module.TouchMoved(touch, Bool)
+	
+	if Enabled == false then return end
 
-local inputConnection = UIS.InputChanged:Connect(module.InputChanged)
+	if(Bool == false) then
+
+		if(DeltaX ~= touch.Delta.X) then
+				
+			DeltaX = touch.Delta.X
+		end
+
+		if(DeltaY ~= touch.Delta.Y) then
+
+			DeltaY = touch.Delta.Y
+		end
+		
+	end	
+	
+end
+
+local renderConnection = RunService.RenderStepped:Connect(module.RenderStepped)
+local touchConnection = UIS.TouchMoved:Connect(module.TouchMoved)
+
+if UIS.KeyboardEnabled == true then
+	local inputConnection = UIS.InputChanged:Connect(module.InputChanged)
+else
+	local renderConnection = RunService.RenderStepped:Connect(module.RenderStepped)
+	local touchConnection = UIS.TouchMoved:Connect(module.TouchMoved)
+end
 
 function module.OnPlayerDeath()
 	
-	renderConnection:Disconnect()
-	inputConnection:Disconnect()
-	
+	if UIS.KeyboardEnabled == true then
+		
+		inputConnection:Disconnect()
+		
+	else
+		touchConnection:Disconnect()
+		renderConnection:Disconnect()
+		
+	end
 end
 
 Humanoid.Died:Connect(module.OnPlayerDeath)
