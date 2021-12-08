@@ -62,6 +62,8 @@ end
 
 function module.CreateMarker(markerObject, config)
 	
+	if activeMarkers[markerObject.Name] then return end
+	
 	local Marker = Sample:Clone()
 	
 	Marker.Parent = UI:WaitForChild("Holder")
@@ -72,7 +74,7 @@ function module.CreateMarker(markerObject, config)
 	
 	Marker.Visible = true
 	
-	table.insert(activeMarkers,{Marker, markerObject})
+	activeMarkers[markerObject.Name] = {Marker, markerObject}
 	
 end
 
@@ -81,7 +83,7 @@ function module.DeleteMarker(markerName)
 	if not activeMarkers[markerName] then return end
 	
 	activeMarkers[markerName][1]:Destroy()
-	table.remove(activeMarkers, markerName)
+	activeMarkers[markerName] = nil
 	
 end
 
@@ -139,6 +141,16 @@ function module.RenderMarkers()
 	
 end
 
+local function onCharacterRemoving()
+	
+	for key, value in next, activeMarkers do
+		
+		module.DeleteMarker(key)
+		
+	end
+	
+end
+
 RunService.RenderStepped:Connect(module.RenderMarkers)
 
 local markerConfig = {
@@ -151,5 +163,7 @@ local markerConfig = {
 local object = game:GetService("ReplicatedStorage"):WaitForChild("ExampleMarker")
 
 module.CreateMarker(object, markerConfig)
+
+Player.CharacterRemoving:Connect(onCharacterRemoving)
 
 return module
