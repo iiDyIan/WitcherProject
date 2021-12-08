@@ -71,7 +71,7 @@ function module:Load(terrainRegion)
 			xpcall(function()
 				game.Workspace.Terrain[obj.Name] = obj.Value
 			end, function(err)
-				print("Failed to set property: " .. tostring(err))
+				warn("Failed to set property: " .. tostring(err))
 			end)
 		end
 		LoadProperty("WaterColor")
