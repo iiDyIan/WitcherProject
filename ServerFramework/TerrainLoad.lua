@@ -54,6 +54,10 @@ end
 
 function module:Load(terrainRegion)
 	
+	game:GetService("ReplicatedStorage"):WaitForChild("EncryptedFunctions"):WaitForChild("DisplayLoadingUI"):FireAllClients()
+	
+	wait(1.25)
+	
 	assert(typeof(terrainRegion) == "Instance" and terrainRegion:IsA("TerrainRegion"),
 		"Load method for TerrainSaveLoad API requires a TerrainRegion object as an argument"
 	)
@@ -91,25 +95,31 @@ function module:Load(terrainRegion)
 		
 	end
 	
-	setObjectProperties(game:GetService("Lighting"), terrainRegion.Parent:WaitForChild("Lighting"):WaitForChild("LightingProperties"), {})
-	deleteChildren(game:GetService("Lighting"), {})
-	generateCloneObjects(terrainRegion.Parent:WaitForChild("Lighting"), game:GetService("Lighting"), {})
 	deleteChildren(workspace, 
 		{
 			["Terrain"] = 1,
 			["Camera"] = 1,
-			
+
 		}
 	)
 	generateCloneObjects(terrainRegion.Parent:WaitForChild("Workspace"), workspace, {})
-	
+
 	local players = game:GetService("Players"):GetChildren()
-	
+
 	for i = 1,#players do
-		
+
+		players[i]:RequestStreamAroundAsync(workspace.SpawnLocation.Position)
+
 		players[i]:LoadCharacter()
-		
+
 	end
+	
+	setObjectProperties(game:GetService("Lighting"), terrainRegion.Parent:WaitForChild("Lighting"):WaitForChild("LightingProperties"), {})
+	deleteChildren(game:GetService("Lighting"), {})
+	generateCloneObjects(terrainRegion.Parent:WaitForChild("Lighting"), game:GetService("Lighting"), {})
+
+	local audioHandler = terrainRegion.Parent:WaitForChild("AudioHandler"):Clone()
+	audioHandler.Parent = game:GetService("StarterGui")
 	
 end
 
