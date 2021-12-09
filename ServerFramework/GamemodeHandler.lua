@@ -7,6 +7,8 @@ local currentGamemode
 local bowHandler = require(script.Parent.BowHandler)
 local meleeHandler = require(script.Parent.MeleeHandler)
 
+local survivalData = require(script.SurvivalData)
+
 local classes = {
 
     ["Archer"] = bowHandler,
@@ -244,6 +246,12 @@ function module.EstablishGamemodeData(gamemode)
         local round5 = Instance.new("StringValue", roundFolder)
         round5.Name = "Round5"
 
+    elseif gamemode == "Survival" then
+
+        local currentRound = Instance.new("IntegerValue", folder)
+        currentRound.Name = "CurrentRound"
+        currentRound.Value = 1
+
     end
 
     repeat
@@ -265,6 +273,22 @@ function module.EstablishGamemodeData(gamemode)
     -- domination; all players on 2 teams; with limited lives and capture data
     -- training; all players on independent teams; with infinite lives
     -- survival; all players on a single team
+
+end
+
+function module.InitializeSurvivalMode()
+
+    local currentRound = game:GerService("ReplicatedStorage"):waitForChild("Gamemode"):WaitForChild("CurrentRound")
+
+    for i = 1, 50 do
+
+        survivalData:ClearLevel(i)
+
+        survivalData:LoadLevel(i):Wait()
+
+    end
+
+    module.CloseGame()
 
 end
 
@@ -321,9 +345,18 @@ function module.CharacterRemoving(character)
         return
 
     elseif gamemode == "Survival" then
+
         player.TeamColor = BrickColor.new("Really black")
 
-        -- wait until round is over, then reset
+        local currentRound = game:GetService("ReplicatedStorage"):WaitForChild("Gamemode"):WaitForChild("CurrentRound").Value
+
+        repeat
+            wait(1)
+        until
+        currentRound ~= game:GetService("ReplicatedStorage"):WaitForChild("Gamemode"):WaitForChild("CurrentRound").Value
+
+        player.TeamColor = BrickColor.new("Maroon")
+            
 
     elseif gamemode == "Duel" then
 
