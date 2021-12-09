@@ -73,6 +73,10 @@ local teamNames = {
 
 }
 
+function module.CloseGame()
+
+end
+
 function module.CreateTeams(gamemode)
 
     if not gamemodeTeamCount[gamemode] then return end
@@ -136,8 +140,21 @@ function module.AssignPlayerTeam(player, partyData, gamemode)
 
     else
 
-        -- assign to a random team
+        local teamCountDict = {}
 
+        for i = 1,#game:GetService("Teams") do
+            teamCountDict[game:GetService("Teams").Name] = {module.CountPlayersOnTeam(game:GetService("Teams")[i].TeamColor), game:GetService("Teams")[i]}
+        end
+
+        for key, value in next,  teamCountDict do
+
+            if key ~= "Spectators" then
+                if value[1] < gamemodeTeamCount[gamemode][2] then
+                    player.TeamColor = value[2].TeamCOlor
+                    return
+                end
+            end
+        end 
     end
 
 end
@@ -203,6 +220,30 @@ function module.EstablishGamemodeData(gamemode)
         captureDataC.Name = "CaptureCControl"
         captureDataC.Value = 0
 
+    elseif gamemode == "Duel" then
+
+        local roundFolder = Instance.new("Folder", folder)
+        roundFolder.Name = "RoundData"
+
+        local currentRound = Instance.new("IntegerValue", roundFolder)
+        currentRound.Name = "CurrentRound"
+        currentRound.Value = 1
+
+        local round1 = Instance.new("StringValue", roundFolder)
+        round1.Name = "Round1"
+
+        local round2 = Instance.new("StringValue", roundFolder)
+        round2.Name = "Round2"
+
+        local round3 = Instance.new("StringValue", roundFolder)
+        round3.Name = "Round3"
+
+        local round4 = Instance.new("StringValue", roundFolder)
+        round4.Name = "Round4"
+
+        local round5 = Instance.new("StringValue", roundFolder)
+        round5.Name = "Round5"
+
     end
 
     repeat
@@ -244,10 +285,36 @@ function module.CharacterRemoving(character)
 
         if teamLives.Value - 1 > 0 then
             teamLives.Value = teamLives.Value - 1
+            return
         else
             player.TeamColor = BrickColor.new("Really black")
-            -- team is out of lives, prevent respawn.
-            -- check if team is the last other team standing, if so, condition win.
+
+            local teamCount
+            local emptyTeamCount
+            local teamStats = game:GetService("ReplicatedStorage"):WaitForChild("Gamemode"):WaitForChild("TeamData"):GetChildren()
+
+            for i = 1,#teamStats do
+
+                if string.gsub(teamStats[i].Name, "TeamData", "") ~= "Spectators" then
+
+                    teamCount = teamCount + 1
+                    if teamStats[i].TeamLives.Value <= 0 then
+
+                        emptyTeamCount = emptyTeamCount + 1
+
+                    end
+
+                end
+
+            end
+
+            if (teamCount-1) == emptyTeamCount then
+                module.CloseGame()
+                return
+
+            end
+            
+            return
         end
 
     elseif gamemode == "Training" then
@@ -259,8 +326,38 @@ function module.CharacterRemoving(character)
         -- wait until round is over, then reset
 
     elseif gamemode == "Duel" then
-        -- check if enough rounds have been won for an overall victory
-        -- if not, update the round count
+
+        local redTeamCount
+        local blueTeamCount
+
+        local rounds = game:GetService("ReplicatedStorage"):WaitForChild("GamemodeData"):WaitForChild("RoundData"):GetChildren()
+
+        for i = 1,#rounds do
+
+            if rounds[i].Name ~= "CurrentRound" then
+
+                if rounds[i].Value == "RED TEAM" then
+                    redTeamCount = redTeamCount + 1
+                elseif rounds[i].Value == "BLUE TEAM" then
+                    blueTeamCOunt = blueTeamCount +1
+                end
+
+            end
+
+        end
+
+        if blueTeamCount >= 3 then
+            module.CloseGame()
+            return
+        elseif redTeamCount >= 3 then
+            module.CloseGame()
+            return
+        end
+
+        local roundData = game:GetService("ReplicatedStorage"):WaitForChild("GamemodeData"):WaitForChild("RoundData")
+
+        roundData:WaitForChild("CurrentRound").Value = roundData:WaitForChild("CurrentRound").Value + 1
+        
 
     end
 
