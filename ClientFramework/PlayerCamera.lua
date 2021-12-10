@@ -219,11 +219,46 @@ function module.TouchMoved(touch, Bool)
 	
 end
 
+function module.AltKeyDown(key, bool)
+
+	if bool == true then return end
+	
+	local Cam = game.Workspace.CurrentCamera
+	Cam.CameraType = Enum.CameraType.Custom
+	UIS.MouseBehavior = Enum.MouseBehavior.Default
+	
+end
+
+function module.AltKeyUp(key, bool)
+	
+	if bool == true then return end
+	
+	local Cam = game.Workspace.CurrentCamera
+	Cam.CameraType = Enum.CameraType.Scriptable
+	UIS.MouseBehavior = Enum.MouseBehavior.LockCenter
+	
+end
+
 local renderConnection = RunService.RenderStepped:Connect(module.RenderStepped)
 local touchConnection = UIS.TouchMoved:Connect(module.TouchMoved)
 
 if UIS.KeyboardEnabled == true then
 	local inputConnection = UIS.InputChanged:Connect(module.InputChanged)
+	local escapeKeyConnect = UIS.InputBegan:Connect(function(input, gameprocessed)
+		if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+		
+		if input.KeyCode == Enum.KeyCode.LeftAlt then
+				module.AltKeyDown(input, gameprocessed)
+		end
+	end)
+	local escapeKeyConnectUp = UIS.InputEnded:Connect(function(input, gameprocessed)
+		if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+		
+		if input.KeyCode == Enum.KeyCode.LeftAlt then
+				module.AltKeyUp(input, gameprocessed)
+		end
+	end)
+			
 else
 	local renderConnection = RunService.RenderStepped:Connect(module.RenderStepped)
 	local touchConnection = UIS.TouchMoved:Connect(module.TouchMoved)
@@ -234,6 +269,8 @@ function module.OnPlayerDeath()
 	if UIS.KeyboardEnabled == true then
 		
 		inputConnection:Disconnect()
+		escapeKeyConnect:Disconnect()
+		escapeKeyConnectUp:Disconnect()
 		
 	else
 		touchConnection:Disconnect()
